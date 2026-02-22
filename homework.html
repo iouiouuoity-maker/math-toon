@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="kk">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Үй тапсырмасы • MathToon</title>
+  <link rel="stylesheet" href="assets/style.css"/>
+</head>
+<body>
+  <div class="topbar">
+    <div class="nav">
+      <div class="brand">
+        <div class="logo"></div>
+        <div><h1>MathToon</h1><small>Үй тапсырмасы</small></div>
+      </div>
+      <div class="pills">
+        <a class="pill" href="index.html">🏠</a>
+        <a class="pill" href="teacher.html">👩‍🏫 Мұғалім</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <section class="hero">
+      <div class="sparkles"></div>
+      <h2>🏠 Үй тапсырмасын көру</h2>
+      <p>Мұғалім берген тапсырмалар осы жерде шығады.</p>
+    </section>
+
+    <div class="grid">
+      <div class="card span6">
+        <h3>Сынып таңда</h3>
+        <select id="g" class="input">
+          <option value="1">1-сынып</option>
+          <option value="2">2-сынып</option>
+          <option value="3">3-сынып</option>
+          <option value="4" selected>4-сынып</option>
+        </select>
+        <button class="btn g" id="load" style="margin-top:10px">Көрсету</button>
+      </div>
+
+      <div class="card span6">
+        <h3>🧩 Ресурс (соңғы берілген)</h3>
+        <div id="embedBox"></div>
+      </div>
+
+      <div class="card">
+        <h3>Берілген тапсырмалар</h3>
+        <table class="table">
+          <thead><tr><th>Мерзімі</th><th>Тақырып</th><th>Деңгей</th><th>Өту</th></tr></thead>
+          <tbody id="rows"><tr><td colspan="4" class="muted">Әзірше тапсырма жоқ.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {loadCurriculum} from "./assets/data.js";
+    import {qs, getHomeworkFor, renderEmbedSmart} from "./assets/app.js";
+
+    (async ()=>{
+      const cur = await loadCurriculum();
+      const titleOf = (g, tid)=> (cur.grades[g]?.topics ?? []).find(x=>x.id===tid)?.title || tid;
+
+      function render(){
+        const g = qs("#g").value;
+        const hws = getHomeworkFor(String(g));
+        const rows = qs("#rows");
+
+        if(!hws.length){
+          rows.innerHTML = `<tr><td colspan="4" class="muted">Әзірше тапсырма жоқ.</td></tr>`;
+          renderEmbedSmart("");
+          return;
+        }
+
+        rows.innerHTML = hws.map(hw=>`
+          <tr>
+            <td>${hw.due || "-"}</td>
+            <td>${titleOf(String(g), hw.topicId)}</td>
+            <td>${hw.level}</td>
+            <td><a class="pill" href="practice.html?g=${g}&tid=${hw.topicId}&lvl=${hw.level}">Өту</a></td>
+          </tr>
+        `).join("");
+
+        renderEmbedSmart(hws[0].iframeUrl || "");
+      }
+
+      qs("#load").onclick = render;
+      render();
+    })();
+  </script>
+</body>
+</html>

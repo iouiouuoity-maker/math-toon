@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="kk">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Мұғалім • MathToon</title>
+  <link rel="stylesheet" href="assets/style.css"/>
+</head>
+<body>
+  <div class="topbar">
+    <div class="nav">
+      <div class="brand">
+        <div class="logo"></div>
+        <div><h1>MathToon</h1><small>Мұғалім панелі</small></div>
+      </div>
+      <div class="pills">
+        <a class="pill" href="index.html">🏠</a>
+        <a class="pill" href="homework.html">🏠 Үй тапсырмасы</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <section class="hero">
+      <div class="sparkles"></div>
+      <h2>👩‍🏫 Күнделікті басқару</h2>
+      <p>1) Тақырыпқа интерактив ресурс (iframe URL)  2) Үй тапсырмасы  3) Нәтижелер</p>
+      <div class="badges">
+        <span class="badge">🧩 iframe</span>
+        <span class="badge">⭐ L1/L2/L3</span>
+        <span class="badge">📊 нәтиже</span>
+      </div>
+    </section>
+
+    <div class="grid">
+      <div class="card span6">
+        <h3>1) Ресурс бекіту (iframe URL)</h3>
+        <div class="kids" style="margin-top:0">
+          <div class="kid" style="flex:1 1 100%">
+            <strong>Сынып</strong>
+            <select id="g1" class="input">
+              <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option>
+            </select>
+            <small>Кейін тақырып таңдайсың</small>
+          </div>
+          <div class="kid" style="flex:1 1 100%">
+            <strong>Тақырып</strong>
+            <select id="tid1" class="input"></select>
+            <small>Осы тақырып бетінде iframe ашылады</small>
+          </div>
+          <div class="kid" style="flex:1 1 100%">
+            <strong>Iframe URL</strong>
+            <input id="iframeUrl" class="input" placeholder="мыс: https://www.mathlearningcenter.org/apps/fraction-tiles"/>
+            <small>Ескерту: кейбір сайттар iframe-ты шектеуі мүмкін</small>
+          </div>
+        </div>
+        <button class="btn g" id="saveEmbed">💾 Сақтау</button>
+        <div id="embedPreview" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card span6">
+        <h3>2) Үй тапсырмасын беру</h3>
+        <div class="kids" style="margin-top:0">
+          <div class="kid" style="flex:1 1 100%">
+            <strong>Сынып</strong>
+            <select id="g2" class="input">
+              <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option>
+            </select>
+            <small>Оқушы homework.html-де көреді</small>
+          </div>
+          <div class="kid" style="flex:1 1 100%">
+            <strong>Тақырып</strong>
+            <select id="tid2" class="input"></select>
+            <small>Тақырыпқа автоматты ресурс тіркеледі</small>
+          </div>
+          <div class="kid" style="flex:1 1 100%">
+            <strong>Деңгей</strong>
+            <select id="lvl" class="input">
+              <option value="L1">L1 (Қызық)</option>
+              <option value="L2">L2 (Шебер)</option>
+              <option value="L3">L3 (Батыр)</option>
+            </select>
+            <small>Саралап оқыту</small>
+          </div>
+          <div class="kid" style="flex:1 1 100%">
+            <strong>Мерзімі</strong>
+            <input id="due" class="input" type="date"/>
+            <small>Күнін қойып бер</small>
+          </div>
+        </div>
+
+        <button class="btn o" id="assign">📌 Үй тапсырмасы</button>
+      </div>
+
+      <div class="card">
+        <h3>3) Нәтижелер (соңғы 50)</h3>
+        <table class="table">
+          <thead><tr><th>Күні</th><th>Оқушы</th><th>Сынып</th><th>Тақырып</th><th>Деңгей</th><th>Балл</th></tr></thead>
+          <tbody id="res"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {loadCurriculum} from "./assets/data.js";
+    import {qs, store, formatDate, setHomework, getEmbedUrl, setEmbedUrl} from "./assets/app.js";
+
+    (async ()=>{
+      const cur = await loadCurriculum();
+      const titleOf = (g, tid)=> (cur.grades[g]?.topics ?? []).find(x=>x.id===tid)?.title || tid;
+
+      function fillTopics(grade, selectEl){
+        const topics = cur.grades[String(grade)]?.topics ?? [];
+        selectEl.innerHTML = topics.map(t=>`<option value="${t.id}">${t.title}</option>`).join("");
+      }
+
+      fillTopics(qs("#g1").value, qs("#tid1"));
+      fillTopics(qs("#g2").value, qs("#tid2"));
+      qs("#g1").onchange = ()=> fillTopics(qs("#g1").value, qs("#tid1"));
+      qs("#g2").onchange = ()=> fillTopics(qs("#g2").value, qs("#tid2"));
+
+      // default due date: today+2
+      const d = new Date(); d.setDate(d.getDate()+2);
+      qs("#due").value = formatDate(d);
+
+      // preview current embed when topic changes
+      function preview(){
+        const g = String(qs("#g1").value);
+        const tid = qs("#tid1").value;
+        const url = getEmbedUrl(g, tid);
+        qs("#iframeUrl").value = url || "";
+        qs("#embedPreview").innerHTML = url ? `
+          <div class="badges"><span class="badge">Алдын ала</span><a class="badge" target="_blank" rel="noreferrer" href="${url}">↗️ Жаңа бет</a></div>
+          <div class="embed" style="margin-top:8px"><iframe src="${url}" loading="lazy" allowfullscreen></iframe></div>
+        ` : `<div class="notice">Бұл тақырыпта ресурс жоқ. URL қойсаң — сақталады.</div>`;
+      }
+      qs("#tid1").onchange = preview;
+      qs("#g1").onchange = preview;
+      preview();
+
+      qs("#saveEmbed").onclick = ()=>{
+        const g = String(qs("#g1").value);
+        const tid = qs("#tid1").value;
+        const url = qs("#iframeUrl").value.trim();
+        setEmbedUrl(g, tid, url);
+        preview();
+        alert("✅ Ресурс сақталды!");
+      };
+
+      qs("#assign").onclick = ()=>{
+        const g = String(qs("#g2").value);
+        const tid = qs("#tid2").value;
+        const level = qs("#lvl").value;
+        const due = qs("#due").value;
+
+        const iframeUrl = getEmbedUrl(g, tid);
+        setHomework({ grade:g, topicId:tid, level, due, iframeUrl });
+
+        alert(`✅ Үй тапсырмасы берілді:\n${g}-сынып • ${titleOf(g, tid)} • ${level}`);
+        renderResults();
+      };
+
+      function renderResults(){
+        const results = store.get("results", []).slice(0,50);
+        qs("#res").innerHTML = results.length ? results.map(r=>`
+          <tr>
+            <td>${r.date}</td>
+            <td>${r.name}</td>
+            <td>${r.grade}</td>
+            <td>${titleOf(r.grade, r.topicId)}</td>
+            <td>${r.level}</td>
+            <td>${r.score}/${r.total}</td>
+          </tr>
+        `).join("") : `<tr><td colspan="6" class="muted">Әзірше нәтиже жоқ.</td></tr>`;
+      }
+      renderResults();
+    })();
+  </script>
+</body>
+</html>

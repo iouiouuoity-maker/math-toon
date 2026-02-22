@@ -7,56 +7,65 @@
   <link rel="stylesheet" href="assets/style.css"/>
 </head>
 <body>
+  <!-- TOP BAR -->
   <div class="topbar">
     <div class="nav">
       <div class="brand">
         <div class="logo"></div>
-        <div><h1>MathToon</h1><small id="crumb">Тақырып</small></div>
+        <div>
+          <h1>MathToon</h1>
+          <small id="crumb">Тақырып</small>
+        </div>
       </div>
+
       <div class="pills">
-        <a class="pill" href="index.html">🏠</a>
-        <a class="pill" id="back" href="#">⬅️ Сынып</a>
+        <a class="pill" href="index.html">🏠 Басты бет</a>
+        <a class="pill" id="back" href="#">⬅️ Сыныпқа қайту</a>
         <a class="pill" href="homework.html">🏠 Үй тапсырмасы</a>
+        <a class="pill" href="teacher.html">👩‍🏫 Мұғалім</a>
       </div>
     </div>
   </div>
 
   <div class="container">
+    <!-- HERO -->
     <section class="hero">
       <div class="sparkles"></div>
       <h2 id="t">Тақырып</h2>
-      <p>Алдымен интерактивті ресурс, сосын деңгей таңдап жаттығу жасаймыз.</p>
+      <p id="desc">Алдымен интерактив ресурс, сосын деңгей таңдап жаттығу жасаймыз.</p>
+      <div class="badges" id="metaBadges"></div>
     </section>
 
     <div class="grid">
+      <!-- LEFT: EMBED -->
       <div class="card span6">
         <h3>🧩 Интерактив ресурс</h3>
         <div id="embedBox"></div>
         <div class="notice" style="margin-top:10px">
-          Егер iframe ашылмаса — “Жаңа бетте ашу” батырмасын басыңдар 😊
+          Егер iframe ашылмаса — “↗️ Жаңа бетте ашу” батырмасын басыңдар 😊
         </div>
       </div>
 
+      <!-- RIGHT: LEVELS -->
       <div class="card span6">
         <h3>⭐ Деңгейді таңда</h3>
 
         <div class="levels">
-          <div class="level l1">
+          <div class="level">
             <div class="tag">L1 • Қызық</div>
             <div class="muted">оңай, 10 тапсырма</div>
-            ${""}
             <div class="starbar"><span class="star">⭐</span><span class="star">⭐</span></div>
             <a class="btn g" id="go1" href="#">Бастау</a>
           </div>
 
-          <div class="level l2">
+          <div class="level">
             <div class="tag">L2 • Шебер</div>
             <div class="muted">орта, 10 тапсырма</div>
             <div class="starbar"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
             <a class="btn p" id="go2" href="#">Бастау</a>
           </div>
 
-          <div class="level l3">
+          <div class="level">
             <div class="tag">L3 • Батыр</div>
             <div class="muted">қиындау, 10 тапсырма</div>
             <div class="starbar"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
@@ -64,11 +73,18 @@
           </div>
         </div>
 
-        <div class="badges">
-          <span class="badge">🐰 Plusik көмектеседі</span>
-          <span class="badge">🦊 Minusya тексереді</span>
-          <span class="badge">🤖 Kobeyt есептейді</span>
-          <span class="badge">🐢 Bolu асықпай үйретеді</span>
+        <!-- GROUPWORK BUTTON (auto show only for some topics) -->
+        <a class="btn o" id="groupBtn" href="#" style="margin-top:10px">👥 Топтық жұмысқа өту</a>
+
+        <div class="badges" style="margin-top:10px">
+          <span class="badge">🐰 Plusik</span>
+          <span class="badge">🦊 Minusya</span>
+          <span class="badge">🤖 Kobeyt</span>
+          <span class="badge">🐢 Bolu</span>
+        </div>
+
+        <div class="notice" style="margin-top:10px">
+          Кеңес: алдымен ресурсқа қарап, содан кейін L1 → L2 → L3 ретімен жасаған дұрыс.
         </div>
       </div>
     </div>
@@ -79,20 +95,52 @@
     import {params, qs, getEmbedUrl, renderEmbedSmart} from "./assets/app.js";
 
     (async ()=>{
+      // URL params
       const {g, tid} = params();
+
+      // Back links / crumbs
       qs("#crumb").textContent = `${g}-сынып • ${tid}`;
       qs("#back").href = `grade.html?g=${g}`;
 
+      // Load curriculum + set title
       const cur = await loadCurriculum();
-      const topic = (cur.grades[g]?.topics ?? []).find(x=>x.id===tid);
-      qs("#t").textContent = topic ? topic.title : "Тақырып";
+      const topics = cur?.grades?.[String(g)]?.topics ?? [];
+      const topic = topics.find(x => x.id === tid);
 
+      qs("#t").textContent = topic?.title || "Тақырып";
+      qs("#desc").textContent = "Алдымен интерактив ресурс, сосын деңгей таңдап жаттығу жасаймыз.";
+
+      // Meta badges
+      const section = topic?.section || "Математика";
+      qs("#metaBadges").innerHTML = `
+        <span class="badge">📘 ${g}-сынып</span>
+        <span class="badge">📌 ${section}</span>
+        <span class="badge">🧩 Ресурс + деңгейлік тапсырма</span>
+      `;
+
+      // Render embed
       const url = getEmbedUrl(String(g), tid);
       renderEmbedSmart(url);
 
+      // Level links
       qs("#go1").href = `practice.html?g=${g}&tid=${tid}&lvl=L1`;
       qs("#go2").href = `practice.html?g=${g}&tid=${tid}&lvl=L2`;
       qs("#go3").href = `practice.html?g=${g}&tid=${tid}&lvl=L3`;
+
+      // Groupwork mapping (add more topics here if you want)
+      const groupMap = {
+        "g1-eq89": "groupwork-g1-eq89.html"
+      };
+
+      const btn = qs("#groupBtn");
+      const page = groupMap[tid];
+
+      if(page){
+        btn.href = page;
+        btn.style.display = "inline-flex";
+      } else {
+        btn.style.display = "none";
+      }
     })();
   </script>
 </body>

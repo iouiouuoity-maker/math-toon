@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="kk">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Жаттығу • MathToon</title>
+  <link rel="stylesheet" href="assets/style.css"/>
+</head>
+<body>
+  <div class="topbar">
+    <div class="nav">
+      <div class="brand">
+        <div class="logo"></div>
+        <div><h1>MathToon</h1><small id="crumb">Жаттығу</small></div>
+      </div>
+      <div class="pills">
+        <a class="pill" id="back" href="#">⬅️ Артқа</a>
+        <a class="pill" href="homework.html">🏠 Үй тапсырмасы</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <section class="hero">
+      <div class="sparkles"></div>
+      <h2 id="title">Жаттығу</h2>
+      <p>10 тапсырма. “Тексеру” бассаң — жұлдызша мен 🎉 шығады!</p>
+    </section>
+
+    <div class="grid">
+      <div class="card span6">
+        <h3>👧 Оқушы</h3>
+        <input id="name" class="input" placeholder="Атыңды жаз (мыс: Аружан)"/>
+        <div class="badges">
+          <span class="badge" id="lvl">L1</span>
+          <span class="badge" id="meta"></span>
+        </div>
+        <div class="notice" style="margin-top:10px">
+          Кеңес: жауапты мұқият жаз 😊
+        </div>
+      </div>
+
+      <div class="card span6">
+        <h3>✅ Нәтиже</h3>
+        <div id="scoreBox" class="muted">Әзірге тексерілмеді.</div><br/>
+        <button class="btn g" id="check">✅ Тексеру</button>
+        <a class="btn" id="retry" href="#" style="margin-left:8px">🔁 Қайта</a>
+      </div>
+
+      <div class="card">
+        <h3>🧩 Тапсырмалар</h3>
+        <div id="list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {params, qs, qsa, formatDate, buildQuiz, saveResult, confettiBurst, renderStars} from "./assets/app.js";
+
+    (async ()=>{
+      const {g, tid, lvl} = params();
+      qs("#crumb").textContent = `${g}-сынып • ${lvl}`;
+      qs("#lvl").textContent = lvl;
+      qs("#meta").textContent = `Тақырып: ${tid}`;
+      qs("#back").href = `topic.html?g=${g}&tid=${tid}`;
+      qs("#retry").href = `practice.html?g=${g}&tid=${tid}&lvl=${lvl}`;
+
+      const quiz = buildQuiz(tid, lvl, 10);
+      qs("#list").innerHTML = quiz.map((t,i)=>`
+        <div class="kid" style="flex:1 1 100%">
+          <div class="sticker ${["st1","st2","st3","st4"][i%4]}">${i+1}</div>
+          <strong>${t.q}</strong>
+          <input class="input ans" data-i="${i}" placeholder="Жауап"/>
+        </div>
+      `).join("");
+
+      qs("#check").onclick = ()=>{
+        const name = qs("#name").value.trim() || "Аты жоқ";
+        const answers = qsa(".ans").map(el => (el.value||"").trim());
+        let correct = 0;
+
+        quiz.forEach((t,i)=>{
+          if(String(answers[i]).toUpperCase() === String(t.a).toUpperCase()) correct++;
+        });
+
+        // ⭐ жұлдызша: 0-10 -> 0-5
+        const stars = Math.max(0, Math.min(5, Math.round(correct/2)));
+
+        qs("#scoreBox").innerHTML = `
+          <div class="badges">
+            <span class="badge">👤 ${name}</span>
+            <span class="badge">✅ ${correct}/10</span>
+            <span class="badge">📅 ${formatDate()}</span>
+          </div>
+          ${renderStars(stars)}
+          <div class="muted" style="margin-top:8px;font-weight:900">
+            Нәтиже сақталды (teacher панельде көрінеді).
+          </div>
+        `;
+
+        if(stars >= 3) confettiBurst();
+
+        saveResult({
+          grade: String(g),
+          topicId: tid,
+          level: lvl,
+          score: correct,
+          total: 10,
+          name,
+          date: formatDate()
+        });
+      };
+    })();
+  </script>
+</body>
+</html>

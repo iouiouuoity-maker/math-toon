@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="kk">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Тақырып • MathToon</title>
+  <link rel="stylesheet" href="assets/style.css"/>
+</head>
+<body>
+  <div class="topbar">
+    <div class="nav">
+      <div class="brand">
+        <div class="logo"></div>
+        <div><h1>MathToon</h1><small id="crumb">Тақырып</small></div>
+      </div>
+      <div class="pills">
+        <a class="pill" href="index.html">🏠</a>
+        <a class="pill" id="back" href="#">⬅️ Сынып</a>
+        <a class="pill" href="homework.html">🏠 Үй тапсырмасы</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <section class="hero">
+      <div class="sparkles"></div>
+      <h2 id="t">Тақырып</h2>
+      <p>Алдымен интерактивті ресурс, сосын деңгей таңдап жаттығу жасаймыз.</p>
+    </section>
+
+    <div class="grid">
+      <div class="card span6">
+        <h3>🧩 Интерактив ресурс</h3>
+        <div id="embedBox"></div>
+        <div class="notice" style="margin-top:10px">
+          Егер iframe ашылмаса — “Жаңа бетте ашу” батырмасын басыңдар 😊
+        </div>
+      </div>
+
+      <div class="card span6">
+        <h3>⭐ Деңгейді таңда</h3>
+
+        <div class="levels">
+          <div class="level l1">
+            <div class="tag">L1 • Қызық</div>
+            <div class="muted">оңай, 10 тапсырма</div>
+            ${""}
+            <div class="starbar"><span class="star">⭐</span><span class="star">⭐</span></div>
+            <a class="btn g" id="go1" href="#">Бастау</a>
+          </div>
+
+          <div class="level l2">
+            <div class="tag">L2 • Шебер</div>
+            <div class="muted">орта, 10 тапсырма</div>
+            <div class="starbar"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+            <a class="btn p" id="go2" href="#">Бастау</a>
+          </div>
+
+          <div class="level l3">
+            <div class="tag">L3 • Батыр</div>
+            <div class="muted">қиындау, 10 тапсырма</div>
+            <div class="starbar"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+            <a class="btn o" id="go3" href="#">Бастау</a>
+          </div>
+        </div>
+
+        <div class="badges">
+          <span class="badge">🐰 Plusik көмектеседі</span>
+          <span class="badge">🦊 Minusya тексереді</span>
+          <span class="badge">🤖 Kobeyt есептейді</span>
+          <span class="badge">🐢 Bolu асықпай үйретеді</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {loadCurriculum} from "./assets/data.js";
+    import {params, qs, getEmbedUrl, renderEmbedSmart} from "./assets/app.js";
+
+    (async ()=>{
+      const {g, tid} = params();
+      qs("#crumb").textContent = `${g}-сынып • ${tid}`;
+      qs("#back").href = `grade.html?g=${g}`;
+
+      const cur = await loadCurriculum();
+      const topic = (cur.grades[g]?.topics ?? []).find(x=>x.id===tid);
+      qs("#t").textContent = topic ? topic.title : "Тақырып";
+
+      const url = getEmbedUrl(String(g), tid);
+      renderEmbedSmart(url);
+
+      qs("#go1").href = `practice.html?g=${g}&tid=${tid}&lvl=L1`;
+      qs("#go2").href = `practice.html?g=${g}&tid=${tid}&lvl=L2`;
+      qs("#go3").href = `practice.html?g=${g}&tid=${tid}&lvl=L3`;
+    })();
+  </script>
+</body>
+</html>
